@@ -87,7 +87,7 @@ static mstime_t sentinel_ask_period = 1000;
 static mstime_t sentinel_publish_period = 2000;
 static mstime_t sentinel_default_down_after = 30000;
 static mstime_t sentinel_tilt_trigger = 2000;
-static mstime_t sentinel_tilt_period = SENTINEL_PING_PERIOD * 30;
+static mstime_t sentinel_tilt_period = SENTINEL_PING_PERIOD * 10;
 static mstime_t sentinel_slave_reconf_timeout = 10000;
 static mstime_t sentinel_min_link_reconnect_period = 15000;
 static mstime_t sentinel_election_timeout = 10000;
@@ -5345,9 +5345,13 @@ void sentinelCheckTiltCondition(void) {
     mstime_t delta = now - sentinel.previous_time;
 
     if (delta < 0 || delta > sentinel_tilt_trigger) {
-        sentinel.tilt = 1;
-        sentinel.tilt_start_time = mstime();
-        sentinelEvent(LL_WARNING,"+tilt",NULL,"#tilt mode entered");
+        if (delta < sentinel_tilt_trigger * 3) {
+            sentinelEvent(LL_WARNING,"+tilt",NULL,"#tilt mode would have been entered. delta is %d", delta);
+        } else {
+            sentinel.tilt = 1;
+            sentinel.tilt_start_time = mstime();
+            sentinelEvent(LL_WARNING,"+tilt",NULL,"#tilt mode entered. delta is %d", delta);
+        }
     }
     sentinel.previous_time = mstime();
 }
